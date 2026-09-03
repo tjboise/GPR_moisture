@@ -1,5 +1,5 @@
 """
-Summary comparison of all 4 methods.
+Summary comparison of all 5 methods.
 """
 import numpy as np
 import matplotlib
@@ -29,11 +29,16 @@ resD = np.load('results_methodD.npy', allow_pickle=True).item()
 r2_D  = np.array(resD['r2'])
 rms_D = np.array(resD['rmse'])
 
+resE = np.load('results_methodE.npy', allow_pickle=True).item()
+r2_E  = np.array(resE['r2'])
+rms_E = np.array(resE['rmse'])
+
 methods = {
     'A: Handcrafted\n+ ML':   {'r2': r2_A,  'rmse': rms_A,  'color': 'steelblue'},
     'B: 1D CNN':               {'r2': r2_B,  'rmse': rms_B,  'color': 'darkorange'},
     'C: FFT\n+ ML':            {'r2': r2_C,  'rmse': rms_C,  'color': 'seagreen'},
     'D: STFT\n+ 2D CNN':       {'r2': r2_D,  'rmse': rms_D,  'color': 'purple'},
+    'E: LSTM':                 {'r2': r2_E,  'rmse': rms_E,  'color': 'crimson'},
 }
 
 # ── Print table ────────────────────────────────────────────────────────────
@@ -51,11 +56,11 @@ for mname, res in methods.items():
 fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
 ax = axes[0]
-x = np.arange(4); width = 0.18
+x = np.arange(4); width = 0.15
 for mi, (mname, res) in enumerate(methods.items()):
     ax.bar(x + mi * width, res['r2'], width,
            label=mname.replace('\n', ' '), color=res['color'], alpha=0.85)
-ax.set_xticks(x + 1.5 * width); ax.set_xticklabels(LAYERS, fontsize=12)
+ax.set_xticks(x + 2 * width); ax.set_xticklabels(LAYERS, fontsize=12)
 ax.set_ylabel('R²', fontsize=12); ax.set_ylim([0, 1.05])
 ax.set_title('R² by moisture depth layer', fontsize=12, fontweight='bold')
 ax.legend(fontsize=9); ax.grid(True, axis='y', alpha=0.3)
@@ -65,7 +70,7 @@ ax = axes[1]
 for mi, (mname, res) in enumerate(methods.items()):
     ax.bar(x + mi * width, res['rmse'], width,
            label=mname.replace('\n', ' '), color=res['color'], alpha=0.85)
-ax.set_xticks(x + 1.5 * width); ax.set_xticklabels(LAYERS, fontsize=12)
+ax.set_xticks(x + 2 * width); ax.set_xticklabels(LAYERS, fontsize=12)
 ax.set_ylabel('RMSE (%)', fontsize=12)
 ax.set_title('RMSE by moisture depth layer', fontsize=12, fontweight='bold')
 ax.legend(fontsize=9); ax.grid(True, axis='y', alpha=0.3)
