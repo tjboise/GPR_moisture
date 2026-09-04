@@ -29,7 +29,7 @@ The box was filled with soil and watered to different moisture levels. GPR A-sca
 
 - **Total samples:** 112 A-scans (39 + 40 + 33 across three conditions)
 - **A-scan length:** 256 time samples, dt = 0.099609 ns (~25 ns total window)
-- **Sampling frequency:** ~10.04 GHz
+- **Sampling frequency:** fs = 1e9 / 0.099609 ≈ 10.04 GHz
 - **Train / Test split:** 80 / 20 (stratified by condition)
 
 ---
@@ -47,15 +47,53 @@ The box was filled with soil and watered to different moisture levels. GPR A-sca
 
 ---
 
-## Analysis Plan
+## Methods & Results
 
-| # | Method | Script | Status |
-|---|--------|--------|--------|
-| 0 | Data preparation (load, align, split) | `data_prep.py` | Done |
-| A | Hand-crafted features + Random Forest / SVR | `method_a_handcrafted.py` | Done |
-| B | 1D CNN — raw A-scan → moisture | `method_b_1dcnn.py` | In progress |
-| C | FFT spectrum features + ML | `method_c_fft.py` | Pending |
-| D | STFT (tuned) + 2D CNN | `method_d_stft_cnn.py` | Pending |
+| Method | Script | Avg R² | Notes |
+|--------|--------|--------|-------|
+| A: Hand-crafted features + ML | `method_a_handcrafted.py` | 0.706 | RF / SVR / GB; 14 physical features |
+| B: 1D CNN | `method_b_1dcnn.py` | **0.816** | Best overall; raw A-scan input |
+| C: FFT spectrum + ML | `method_c_fft.py` | 0.559 | Frequency-domain features only |
+| D: STFT + 2D CNN | `method_d_stft_cnn.py` | 0.808 | Time-frequency image input |
+| E: LSTM | `method_e_lstm.py` | 0.003 | Fails — too few samples for RNN |
+
+### R² and RMSE by layer
+
+![Method comparison](fig_summary_comparison.png)
+
+![Average R²](fig_summary_avg_r2.png)
+
+---
+
+## STFT Preprocessing (Method D)
+
+Short-Time Fourier Transform (STFT) converts each 1D A-scan into a 2D time-frequency spectrogram image, which is then fed into a 2D CNN. This captures how the frequency content of the GPR signal evolves over time — useful because moisture affects both the amplitude and the frequency-dependent attenuation of the EM wave.
+
+### Parameters
+
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `fs` | 1e9 / 0.099609 ≈ 10.04 GHz | Sampling frequency |
+| `nperseg` | 32 samples (~3.2 ns) | Sliding window length — smaller = better time resolution |
+| `noverlap` | 28 samples (87.5%) | High overlap gives smooth time axis |
+| `nfft` | 512 | Zero-padding for finer frequency grid |
+| Frequency range | 0 – 3 GHz | Only physically meaningful range kept |
+| Output image size | 153 × 57 (freq × time bins) | Input to 2D CNN |
+
+Window choice trade-off: a shorter window (nperseg=32 vs the 56 used in the reference paper) gives better **time resolution** (~3.2 ns) at the cost of slightly coarser **frequency resolution**. This matters here because the pipe reflection is a brief event in time, and we want to resolve it precisely.
+
+### STFT image examples
+
+Low moisture samples (top row) vs high moisture samples (bottom row), sorted by B-layer moisture content:
+
+![STFT sample images](fig_methodD_stft_samples.png)
+
+Each image shows:
+- **X-axis**: time bins (covering the full ~25 ns A-scan window)
+- **Y-axis**: frequency bins (0 – 3 GHz)
+- **Color**: signal energy (bright = high energy)
+
+The bright cluster in the lower-left region corresponds to the main GPR pulse energy concentrated at low frequencies and early arrival time. Changes in moisture shift and attenuate this energy pattern, which the 2D CNN learns to map to moisture values.
 
 ---
 
@@ -66,7 +104,7 @@ Extracted from each aligned A-scan:
 1. Peak amplitude
 2. Peak-to-peak amplitude
 3. Signal energy
-4. Envelope maximum
+4. Envelope maximum (Hilbert transform)
 5. Envelope area (integral)
 6. Time of envelope peak
 7. Dominant frequency (FFT)
