@@ -32,40 +32,9 @@ The box was filled with soil and watered to different moisture levels. GPR A-sca
 - **Sampling frequency:** fs = 1e9 / 0.099609 ≈ 10.04 GHz
 - **Train / Test split:** 80 / 20 (stratified by condition)
 
----
 
-## Data Files
 
-| File | Description |
-|------|-------------|
-| `GPR measurement data in field.xlsx` | Raw GPR signals and moisture measurements (6 sheets) |
-| `X_norm.npy` | Normalized, time-zero-aligned A-scans — shape (112, 256) |
-| `y_moisture.npy` | Moisture labels — shape (112, 4), columns: S / T / M / B |
-| `cond_labels.npy` | Condition index (0=2in_sand, 1=4in_sand, 2=4in_clay) |
-| `idx_train.npy` | Training set indices (89 samples) |
-| `idx_test.npy` | Test set indices (23 samples) |
-
----
-
-## Methods & Results
-
-| Method | Script | Avg R² | Notes |
-|--------|--------|--------|-------|
-| A: Hand-crafted features + ML | `method_a_handcrafted.py` | 0.706 | RF / SVR / GB; 14 physical features |
-| B: 1D CNN | `method_b_1dcnn.py` | **0.816** | Best overall; raw A-scan input |
-| C: FFT spectrum + ML | `method_c_fft.py` | 0.559 | Frequency-domain features only |
-| D: STFT + 2D CNN | `method_d_stft_cnn.py` | 0.808 | Time-frequency image input |
-| E: LSTM | `method_e_lstm.py` | 0.003 | Fails — too few samples for RNN |
-
-### R² and RMSE by layer
-
-![Method comparison](fig_summary_comparison.png)
-
-![Average R²](fig_summary_avg_r2.png)
-
----
-
-## STFT Preprocessing (Method D)
+## STFT Preprocessing
 
 Short-Time Fourier Transform (STFT) converts each 1D A-scan into a 2D time-frequency spectrogram image, which is then fed into a 2D CNN. This captures how the frequency content of the GPR signal evolves over time — useful because moisture affects both the amplitude and the frequency-dependent attenuation of the EM wave.
 
@@ -97,24 +66,6 @@ The bright cluster in the lower-left region corresponds to the main GPR pulse en
 
 ---
 
-## Hand-Crafted Features (Method A)
-
-Extracted from each aligned A-scan:
-
-1. Peak amplitude
-2. Peak-to-peak amplitude
-3. Signal energy
-4. Envelope maximum (Hilbert transform)
-5. Envelope area (integral)
-6. Time of envelope peak
-7. Dominant frequency (FFT)
-8. Spectral centroid
-9. Energy ratio (first half / total)
-10. RMS amplitude
-11. Zero-crossing rate
-12–14. Mean envelope amplitude in early / mid / late time windows
-
----
 
 ## Reference
 
