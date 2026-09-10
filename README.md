@@ -4,6 +4,23 @@ Using Ground Penetrating Radar (GPR) A-scan signals to predict soil moisture con
 
 ---
 
+## Dataset
+
+| Condition | Soil type | Pipe (dia.) | Pipe top depth | Original | Additional | Total |
+|-----------|-----------|-------------|----------------|----------|------------|-------|
+| 2 in sand | Sand      | 2"          | 0.40 m         | 39       | 8          | **47** |
+| 4 in sand | Sand      | 4"          | 0.35 m         | 40       | 8          | **48** |
+| 4 in clay | Sandy clay | 4"         | 0.30 m         | 33       | 7          | **40** |
+| **Total** |           |             |                | 112      | 23         | **135** |
+
+A controlled box experiment: the box was filled with soil, watered to different moisture levels, and GPR A-scans were collected at each condition. Soil moisture was measured simultaneously at 4 depths (S / T / M / B). All raw data are available in `GPR_moisture_merged.xlsx`.
+
+- **A-scan:** 256 time samples, dt = 0.099609 ns (~25 ns window), fs ≈ 10.04 GHz
+- **Moisture depths:** S = 0 cm, T = 8 cm, M = 22 cm, B = 35 cm
+- **Evaluation:** 5-fold cross-validation (stratified by condition)
+
+---
+
 ## Experiment Setup
 
 A controlled box experiment with three conditions:
@@ -12,25 +29,18 @@ A controlled box experiment with three conditions:
 |-----------|--------------|-----------|----------------|
 | 2 in sand | 2" | Sand | 0.40 m |
 | 4 in sand | 4" | Sand | 0.35 m |
-| 4 in clay | 4" | Clay | 0.30 m |
+| 4 in clay | 4" | Sandy clay | 0.30 m |
 
 The box was filled with soil and watered to different moisture levels. GPR A-scans were collected at each moisture condition, and soil moisture was measured at 4 depths simultaneously.
 
 ### Moisture measurement depths
 
-| Layer | Sand depth | Clay depth |
-|-------|-----------|------------|
-| S (Surface) | ground surface | ground surface |
-| T (Top) | 8 cm | ~4 cm |
-| M (Middle) | 22 cm | ~17 cm |
-| B (Bottom) | 35 cm | ~30 cm |
-
-### Dataset summary
-
-- **Total samples:** 112 A-scans (39 + 40 + 33 across three conditions)
-- **A-scan length:** 256 time samples, dt = 0.099609 ns (~25 ns total window)
-- **Sampling frequency:** fs = 1e9 / 0.099609 ≈ 10.04 GHz
-- **Train / Test split:** 80 / 20 (stratified by condition)
+| Layer | Depth |
+|-------|-------|
+| S (Surface) | 0 cm |
+| T (Top)     | 8 cm |
+| M (Middle)  | 22 cm |
+| B (Bottom)  | 35 cm |
 
 ---
 
@@ -38,24 +48,26 @@ The box was filled with soil and watered to different moisture levels. GPR A-sca
 
 | File | Description |
 |------|-------------|
-| `GPR measurement data in field.xlsx` | Raw GPR signals and moisture measurements (6 sheets) |
-| `X_norm.npy` | Normalized, time-zero-aligned A-scans — shape (112, 256) |
-| `y_moisture.npy` | Moisture labels — shape (112, 4), columns: S / T / M / B |
+| `GPR_moisture_merged.xlsx` | All 135 samples — GPR signals + moisture (6 sheets, README tab) |
+| `X_norm.npy` | Normalized, time-zero-aligned A-scans — shape (135, 256) |
+| `y_moisture.npy` | Moisture labels — shape (135, 4), columns: S / T / M / B |
 | `cond_labels.npy` | Condition index (0=2in_sand, 1=4in_sand, 2=4in_clay) |
-| `idx_train.npy` | Training set indices (89 samples) |
-| `idx_test.npy` | Test set indices (23 samples) |
+
+Run `python data_prep.py` to regenerate numpy files from the raw Excel sources.
 
 ---
 
 ## Methods & Results
 
-| Method | Script | Avg R² | Notes |
-|--------|--------|--------|-------|
-| A: Hand-crafted features + ML | `method_a_handcrafted.py` | 0.706 | RF / SVR / GB; 14 physical features |
-| B: 1D CNN | `method_b_1dcnn.py` | **0.816** | Best overall; raw A-scan input |
-| C: FFT spectrum + ML | `method_c_fft.py` | 0.559 | Frequency-domain features only |
-| D: STFT + 2D CNN | `method_d_stft_cnn.py` | 0.808 | Time-frequency image input |
-| E: LSTM | `method_e_lstm.py` | 0.003 | Fails — too few samples for RNN |
+Evaluation: 5-fold cross-validation on 135 samples (Methods A–C and E used a single 80/20 split on the original 112 samples; Method D was re-evaluated with 5-fold CV on 135 samples).
+
+| Method | Script | Avg R² | S | T | M | B |
+|--------|--------|--------|---|---|---|---|
+| A: Hand-crafted + ML | `method_a_handcrafted.py` | 0.706 | 0.681 | 0.647 | 0.728 | 0.767 |
+| B: 1D CNN | `method_b_1dcnn.py` | **0.816** | 0.747 | 0.803 | 0.832 | 0.882 |
+| C: FFT + ML | `method_c_fft.py` | 0.559 | — | — | — | — |
+| D: STFT + 2D CNN *(5-fold, n=135)* | `method_d_stft_cnn.py` | 0.797 ± 0.056 | 0.870 | 0.754 | 0.743 | 0.820 |
+| E: LSTM | `method_e_lstm.py` | 0.003 | — | — | — | — |
 
 ### R² and RMSE by layer
 

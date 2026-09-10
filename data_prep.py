@@ -1,13 +1,19 @@
 """
 Shared data preparation for all GPR moisture prediction experiments.
-Loads all 3 conditions, aligns A-scans (time-zero correction),
-and saves train/test splits as numpy arrays.
+Loads all 3 conditions from two Excel files, aligns A-scans (time-zero
+correction), and saves train/test splits as numpy arrays.
+
+Sources
+-------
+  GPR measurement data in field.xlsx  — original 112 A-scans (3 sheets)
+  Additional data (1).xlsx            — 23 additional A-scans (single sheet)
 """
 import openpyxl
 import numpy as np
 from sklearn.model_selection import train_test_split
 
 EXCEL = 'GPR measurement data in field.xlsx'
+EXCEL_ADD = 'Additional data (1).xlsx'
 RANDOM_SEED = 42
 
 CONDITIONS = [
@@ -31,7 +37,14 @@ CONDITIONS = [
     },
 ]
 
-# Clay depth labels differ from sand — map to same order: S, T, M, B
+# Condition name mapping from Additional data to CONDITIONS index
+ADDITIONAL_COND_MAP = {
+    'Sand 2in':       0,
+    'sand 4in':       1,
+    'sandy clay 4in': 2,
+}
+
+# All depths use S / T(8cm) / M(22cm) / B(35cm)
 MOIST_LAYER_ORDER = ['S', 'T', 'M', 'B']
 
 
@@ -96,6 +109,51 @@ def align_all(traces):
     return aligned, ref
 
 
+def load_additional():
+    """Load the 23 extra A-scans from Additional data (1).xlsx.
+
+    Returns list of (trace_array, moisture_array_[S,T,M,B], cond_index).
+    GPR data rows are the 256 valid time samples (None-time rows skipped).
+    """
+    wb = openpyxl.load_workbook(EXCEL_ADD, data_only=True)
+    ws = wb['Sheet1']
+    rows = list(ws.iter_rows(values_only=True))
+
+    # rows[0]: soil type per column (cols 4-26, i.e. 23 measurements)
+    # rows[1]: measurement numbers 1-23
+    # rows[2-5]: S / T / M / B moisture
+    # rows[8]: 'Time', 1..23  (GPR header)
+    # rows[9+]: GPR data (keep only rows where time col is not None)
+
+    n_meas = 23
+    soil_types = [rows[0][4 + j] for j in range(n_meas)]
+    moisture_raw = np.full((4, n_meas), np.nan)
+    for li, ri in enumerate([2, 3, 4, 5]):
+        for j in range(n_meas):
+            v = rows[ri][4 + j]
+            moisture_raw[li, j] = float(v) if v is not None else np.nan
+
+    # Collect valid GPR rows
+    gpr_data = []
+    for row in rows[9:]:
+        t = row[3]
+        if t is None:
+            continue
+        gpr_data.append([row[4 + j] if row[4 + j] is not None else 0.0
+                         for j in range(n_meas)])
+    traces_add = np.array(gpr_data, dtype=float)  # (256, 23)
+
+    results = []
+    for j in range(n_meas):
+        stype = soil_types[j]
+        cond_i = ADDITIONAL_COND_MAP.get(stype, -1)
+        if cond_i < 0:
+            continue
+        mo = moisture_raw[:, j]
+        results.append((traces_add[:, j], mo, cond_i))
+    return results
+
+
 def build_dataset():
     wb = openpyxl.load_workbook(EXCEL)
     all_traces = []
@@ -115,6 +173,23 @@ def build_dataset():
             all_moisture.append(mo)
             all_condition.append(cond_i)
 
+    # ── Additional data ────────────────────────────────────────────────────
+    add_by_cond = {0: [], 1: [], 2: []}
+    for trace, mo, cond_i in load_additional():
+        add_by_cond[cond_i].append((trace, mo))
+
+    for cond_i in range(3):
+        if not add_by_cond[cond_i]:
+            continue
+        raw_stack = np.column_stack([t for t, _ in add_by_cond[cond_i]])
+        aligned, _ = align_all(raw_stack)
+        for j, (_, mo) in enumerate(add_by_cond[cond_i]):
+            if np.any(np.isnan(mo)):
+                continue
+            all_traces.append(aligned[:, j])
+            all_moisture.append(mo)
+            all_condition.append(cond_i)
+
     X = np.array(all_traces, dtype=np.float32)       # (N, 256)
     y = np.array(all_moisture, dtype=np.float32)      # (N, 4)
     cond = np.array(all_condition, dtype=np.int32)    # (N,)
@@ -129,9 +204,12 @@ def build_dataset():
     idx_train, idx_test = train_test_split(
         idx, test_size=0.2, random_state=RANDOM_SEED, stratify=cond)
 
-    print(f'Total samples: {len(X_norm)}')
+    cond_counts = np.bincount(cond)
+    cond_names  = [c['name'] for c in CONDITIONS]
+    print(f'Total samples: {len(X_norm)}  (original 112 + additional 23)')
     print(f'Train: {len(idx_train)}, Test: {len(idx_test)}')
-    print(f'Condition counts: {np.bincount(cond)}')
+    for ci, (name, cnt) in enumerate(zip(cond_names, cond_counts)):
+        print(f'  {name}: {cnt} samples')
     print(f'Moisture stats (train):')
     for li, lbl in enumerate(MOIST_LAYER_ORDER):
         vals = y[idx_train, li]
