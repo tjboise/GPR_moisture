@@ -8,11 +8,11 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-X      = np.load('X_norm.npy')       # (135, 256)
-y      = np.load('y_moisture.npy')   # (135, 4)
-cond   = np.load('cond_labels.npy')  # (135,)
-idx_tr = np.load('idx_train.npy')
-idx_te = np.load('idx_test.npy')
+X      = np.load('../data/X_norm.npy')       # (135, 256)
+y      = np.load('../data/y_moisture.npy')   # (135, 4)
+cond   = np.load('../data/cond_labels.npy')  # (135,)
+idx_tr = np.load('../data/idx_train.npy')
+idx_te = np.load('../data/idx_test.npy')
 time   = np.linspace(0, 255 * 0.099609, 256)
 
 LAYERS   = ['S (0 cm)', 'T (8 cm)', 'M (22 cm)', 'B (35 cm)']
@@ -79,7 +79,7 @@ for li, lname in enumerate(LAYERS):
     ax.set_title(f'Moisture — {lname}', fontsize=10, fontweight='bold')
     ax.grid(True, axis='y', alpha=0.2); ax.tick_params(labelsize=7)
 
-plt.savefig('fig_merged_overview.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_merged_overview.png', dpi=150, bbox_inches='tight')
 plt.close()
 print('Saved: fig_merged_overview.png')
 

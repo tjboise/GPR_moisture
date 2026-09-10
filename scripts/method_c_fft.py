@@ -14,10 +14,10 @@ from sklearn.metrics import r2_score, mean_squared_error
 LAYERS = ['S', 'T', 'M', 'B']
 RANDOM_SEED = 42
 
-X_norm  = np.load('X_norm.npy')       # (112, 256)
-y       = np.load('y_moisture.npy')   # (112, 4)
-idx_tr  = np.load('idx_train.npy')
-idx_te  = np.load('idx_test.npy')
+X_norm  = np.load('../data/X_norm.npy')       # (112, 256)
+y       = np.load('../data/y_moisture.npy')   # (112, 4)
+idx_tr  = np.load('../data/idx_train.npy')
+idx_te  = np.load('../data/idx_test.npy')
 
 # ── FFT feature extraction ─────────────────────────────────────────────────
 def fft_features(X):
@@ -78,7 +78,7 @@ for li, (ax, lbl) in enumerate(zip(axes, LAYERS)):
     ax.set_xlabel('Actual moisture (%)'); ax.set_ylabel('Predicted moisture (%)')
     ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodC_scatter.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodC_scatter.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # ── R² comparison ─────────────────────────────────────────────────────────
@@ -92,10 +92,10 @@ ax.set_ylabel('R²'); ax.set_ylim([0, 1])
 ax.set_title('Method C (FFT features): R² by layer and model', fontweight='bold')
 ax.legend(); ax.grid(True, axis='y', alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodC_r2.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodC_r2.png', dpi=150, bbox_inches='tight')
 plt.close()
 
-np.save('results_methodC.npy', {
+np.save('../results/results_methodC.npy', {
     k: {'r2': v['r2'], 'rmse': v['rmse']} for k, v in results.items()
 }, allow_pickle=True)
 print('Saved: fig_methodC_scatter.png, fig_methodC_r2.png')

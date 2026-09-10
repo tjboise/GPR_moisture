@@ -14,11 +14,11 @@ from sklearn.metrics import r2_score, mean_squared_error
 
 LAYERS = ['S', 'T', 'M', 'B']
 
-X_norm   = np.load('X_norm.npy')          # (112, 256), normalized traces
-y        = np.load('y_moisture.npy')      # (112, 4)
-idx_tr   = np.load('idx_train.npy')
-idx_te   = np.load('idx_test.npy')
-time_ns  = np.load('time_ns.npy')
+X_norm   = np.load('../data/X_norm.npy')          # (112, 256), normalized traces
+y        = np.load('../data/y_moisture.npy')      # (112, 4)
+idx_tr   = np.load('../data/idx_train.npy')
+idx_te   = np.load('../data/idx_test.npy')
+time_ns  = np.load('../data/time_ns.npy')
 dt       = time_ns[1] - time_ns[0]
 
 # ── Feature extraction ────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ for li, (ax, lbl) in enumerate(zip(axes, LAYERS)):
     ax.set_ylabel('Predicted moisture (%)')
     ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodA_scatter.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodA_scatter.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # ── Plot 2: Feature importance ─────────────────────────────────────────────
@@ -161,7 +161,7 @@ ax.set_ylabel('Mean feature importance (avg over S/T/M/B)')
 ax.set_title('Option A — Random Forest: Feature importance', fontsize=11, fontweight='bold')
 ax.grid(True, axis='y', alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodA_importance.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodA_importance.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # ── Plot 3: R² comparison across models and layers ────────────────────────
@@ -179,11 +179,11 @@ ax.set_title('Option A: R² by moisture layer and model', fontsize=11, fontweigh
 ax.legend()
 ax.grid(True, axis='y', alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodA_r2_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodA_r2_comparison.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # Save results for final comparison
-np.save('results_methodA.npy', {
+np.save('../results/results_methodA.npy', {
     k: {'r2': v['r2'], 'rmse': v['rmse']} for k, v in results.items()
 }, allow_pickle=True)
 

@@ -12,8 +12,8 @@ import openpyxl
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-EXCEL = 'GPR measurement data in field.xlsx'
-EXCEL_ADD = 'Additional data (1).xlsx'
+EXCEL = '../data/GPR measurement data in field.xlsx'
+EXCEL_ADD = '../data/Additional data (1).xlsx'
 RANDOM_SEED = 42
 
 CONDITIONS = [
@@ -216,12 +216,12 @@ def build_dataset():
         print(f'  {lbl}: mean={vals.mean():.1f}%, std={vals.std():.1f}%, '
               f'range=[{vals.min():.1f}, {vals.max():.1f}]')
 
-    np.save('X_norm.npy', X_norm)
-    np.save('y_moisture.npy', y)
-    np.save('cond_labels.npy', cond)
-    np.save('idx_train.npy', idx_train)
-    np.save('idx_test.npy', idx_test)
-    np.save('time_ns.npy', np.linspace(0, (255) * 0.099609, 256))
+    np.save('../data/X_norm.npy', X_norm)
+    np.save('../data/y_moisture.npy', y)
+    np.save('../data/cond_labels.npy', cond)
+    np.save('../data/idx_train.npy', idx_train)
+    np.save('../data/idx_test.npy', idx_test)
+    np.save('../data/time_ns.npy', np.linspace(0, (255) * 0.099609, 256))
 
     print('\nSaved: X_norm.npy, y_moisture.npy, cond_labels.npy, idx_train.npy, idx_test.npy')
     return X_norm, y, cond, idx_train, idx_test

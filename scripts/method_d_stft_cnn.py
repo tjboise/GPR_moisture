@@ -19,9 +19,9 @@ RANDOM_SEED = 42
 torch.manual_seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
-X_norm = np.load('X_norm.npy')       # (135, 256)
-y      = np.load('y_moisture.npy')   # (135, 4)
-cond   = np.load('cond_labels.npy')  # (135,) — used for stratification
+X_norm = np.load('../data/X_norm.npy')       # (135, 256)
+y      = np.load('../data/y_moisture.npy')   # (135, 4)
+cond   = np.load('../data/cond_labels.npy')  # (135,) — used for stratification
 
 # ── STFT parameters ────────────────────────────────────────────────────────
 FS_HZ    = 1e9 / 0.099609
@@ -170,7 +170,7 @@ for li, (ax, lbl) in enumerate(zip(axes, LAYERS)):
     ax.set_xlabel('Actual moisture (%)'); ax.set_ylabel('Predicted moisture (%)')
     ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodD_scatter.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodD_scatter.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # ── STFT sample images ─────────────────────────────────────────────────────
@@ -192,10 +192,10 @@ for col, idx in enumerate(sorted_idx[-4:]):
     ax.set_title(f'B={b_mo[idx]:.1f}%', fontsize=9)
     ax.set_xlabel('Time bins'); ax.set_ylabel('Freq bins')
 plt.tight_layout()
-plt.savefig('fig_methodD_stft_samples.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodD_stft_samples.png', dpi=150, bbox_inches='tight')
 plt.close()
 
-np.save('results_methodD.npy',
+np.save('../results/results_methodD.npy',
         {'r2': r2_mean.tolist(), 'rmse': rm_mean.tolist(),
          'r2_std': r2_std.tolist(), 'rmse_std': rm_std.tolist(),
          'fold_r2s': fold_r2s.tolist(), 'fold_rmses': fold_rmses.tolist()},

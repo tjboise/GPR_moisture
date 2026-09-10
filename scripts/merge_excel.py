@@ -7,9 +7,9 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 import numpy as np
 
-EXCEL_ORIG = 'GPR measurement data in field.xlsx'
-EXCEL_ADD  = 'Additional data (1).xlsx'
-EXCEL_OUT  = 'GPR_moisture_merged.xlsx'
+EXCEL_ORIG = '../data/GPR measurement data in field.xlsx'
+EXCEL_ADD  = '../data/Additional data (1).xlsx'
+EXCEL_OUT  = '../data/GPR_moisture_merged.xlsx'
 
 COND_MAP_ADD = {          # soil type label in additional file → condition index
     'Sand 2in':       0,

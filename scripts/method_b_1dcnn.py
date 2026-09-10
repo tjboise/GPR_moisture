@@ -16,10 +16,10 @@ RANDOM_SEED = 42
 torch.manual_seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
-X_norm  = np.load('X_norm.npy')       # (112, 256)
-y       = np.load('y_moisture.npy')   # (112, 4)
-idx_tr  = np.load('idx_train.npy')
-idx_te  = np.load('idx_test.npy')
+X_norm  = np.load('../data/X_norm.npy')       # (112, 256)
+y       = np.load('../data/y_moisture.npy')   # (112, 4)
+idx_tr  = np.load('../data/idx_train.npy')
+idx_te  = np.load('../data/idx_test.npy')
 
 X_tr = torch.tensor(X_norm[idx_tr, None, :], dtype=torch.float32)  # (N, 1, 256)
 X_te = torch.tensor(X_norm[idx_te, None, :], dtype=torch.float32)
@@ -122,7 +122,7 @@ ax.set_xlabel('Epoch'); ax.set_ylabel('MSE loss (normalized)')
 ax.set_title('1D CNN — Training curve', fontweight='bold')
 ax.legend(); ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodB_training.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodB_training.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # ── Plot 2: Scatter plots ─────────────────────────────────────────────────
@@ -137,8 +137,8 @@ for li, (ax, lbl) in enumerate(zip(axes, LAYERS)):
     ax.set_xlabel('Actual moisture (%)'); ax.set_ylabel('Predicted moisture (%)')
     ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('fig_methodB_scatter.png', dpi=150, bbox_inches='tight')
+plt.savefig('../results/fig_methodB_scatter.png', dpi=150, bbox_inches='tight')
 plt.close()
 
-np.save('results_methodB.npy', {'r2': r2s, 'rmse': rmses}, allow_pickle=True)
+np.save('../results/results_methodB.npy', {'r2': r2s, 'rmse': rmses}, allow_pickle=True)
 print('\nSaved: fig_methodB_training.png, fig_methodB_scatter.png')
