@@ -97,7 +97,9 @@ Each image shows:
 
 The bright cluster in the lower-left corresponds to the main GPR pulse energy at low frequencies and early arrival time. Changes in moisture shift and attenuate this pattern, which the 2D CNN learns to map to moisture values.
 
-### Predicted vs Actual (OOF)
+### Predicted vs Actual
+
+Each point is a held-out test prediction from 5-fold cross-validation (every sample is predicted exactly once by a model that never saw it during training).
 
 ![Scatter plot](results/fig_methodD_scatter.png)
 
