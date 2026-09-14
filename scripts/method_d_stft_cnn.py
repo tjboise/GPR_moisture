@@ -176,9 +176,10 @@ plt.close()
 # ── STFT sample images — one low + one high per layer ─────────────────────
 LAYER_LABELS = ['S (0 cm)', 'T (8 cm)', 'M (22 cm)', 'B (35 cm)']
 LAYER_SHORT  = ['S', 'T', 'M', 'B']
-fig, axes = plt.subplots(2, 4, figsize=(18, 8))
+COND_NAMES   = {0: 'Sand, 2" pipe', 1: 'Sand, 4" pipe', 2: 'Clay, 4" pipe'}
+fig, axes = plt.subplots(2, 4, figsize=(18, 9))
 fig.suptitle(f'STFT images  (nperseg={NPERSEG}, noverlap={NOVERLAP}, nfft={NFFT})\n'
-             'Top row: lowest moisture example for each layer  |  Bottom row: highest moisture example',
+             'Top row: lowest moisture example per layer  |  Bottom row: highest moisture example',
              fontsize=11, fontweight='bold')
 
 for col, (li, lname) in enumerate(zip(range(4), LAYER_LABELS)):
@@ -192,7 +193,8 @@ for col, (li, lname) in enumerate(zip(range(4), LAYER_LABELS)):
         ax.imshow(imgs[idx, 0], aspect='auto', origin='lower', cmap='hot',
                   extent=[0, W, 0, H])
         vals = '  '.join(f'{s}={y[idx, i]:.1f}%' for i, s in enumerate(LAYER_SHORT))
-        ax.set_title(f'{lname}  [{tag}]\n{vals}', fontsize=8, linespacing=1.5)
+        cond_str = COND_NAMES[cond[idx]]
+        ax.set_title(f'{lname}  [{tag}]\n{vals}\n{cond_str}', fontsize=8, linespacing=1.5)
         ax.set_xlabel('Time bins', fontsize=8)
         ax.set_ylabel('Freq bins', fontsize=8)
         ax.tick_params(labelsize=7)
