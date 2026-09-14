@@ -175,22 +175,24 @@ plt.close()
 
 # ── STFT sample images — one low + one high per layer ─────────────────────
 LAYER_LABELS = ['S (0 cm)', 'T (8 cm)', 'M (22 cm)', 'B (35 cm)']
-fig, axes = plt.subplots(2, 4, figsize=(16, 7))
-fig.suptitle(f'STFT images (nperseg={NPERSEG}, noverlap={NOVERLAP}, nfft={NFFT})\n'
-             'Top row: low moisture example  |  Bottom row: high moisture example',
+LAYER_SHORT  = ['S', 'T', 'M', 'B']
+fig, axes = plt.subplots(2, 4, figsize=(18, 8))
+fig.suptitle(f'STFT images  (nperseg={NPERSEG}, noverlap={NOVERLAP}, nfft={NFFT})\n'
+             'Top row: lowest moisture example for each layer  |  Bottom row: highest moisture example',
              fontsize=11, fontweight='bold')
 
 for col, (li, lname) in enumerate(zip(range(4), LAYER_LABELS)):
     layer_mo  = y[:, li]
     sorted_i  = np.argsort(layer_mo)
-    idx_low   = sorted_i[0]       # lowest moisture for this layer
-    idx_high  = sorted_i[-1]      # highest moisture for this layer
+    idx_low   = sorted_i[0]
+    idx_high  = sorted_i[-1]
 
     for row, (idx, tag) in enumerate([(idx_low, 'low'), (idx_high, 'high')]):
         ax = axes[row, col]
         ax.imshow(imgs[idx, 0], aspect='auto', origin='lower', cmap='hot',
                   extent=[0, W, 0, H])
-        ax.set_title(f'{lname}\n{layer_mo[idx]:.1f}% ({tag})', fontsize=9)
+        vals = '  '.join(f'{s}={y[idx, i]:.1f}%' for i, s in enumerate(LAYER_SHORT))
+        ax.set_title(f'{lname}  [{tag}]\n{vals}', fontsize=8, linespacing=1.5)
         ax.set_xlabel('Time bins', fontsize=8)
         ax.set_ylabel('Freq bins', fontsize=8)
         ax.tick_params(labelsize=7)
