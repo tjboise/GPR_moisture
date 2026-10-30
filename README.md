@@ -76,22 +76,44 @@ A shorter window (nperseg=32 vs the 56 used in the reference paper) gives better
 
 ### Model variants explored
 
-Three incremental improvements were tested on top of the baseline STFT + 2D CNN:
+Five augmentation and conditioning strategies were tested on top of the baseline STFT + 2D CNN:
 
-1. **Condition-aware head** — soil type (Sand / Clay) and pipe diameter (2" / 4") are encoded as separate one-hot vectors and concatenated to the CNN feature vector before the fully connected layers. This lets the model learn the effect of each factor independently.
+1. **Condition-aware head (CA-CNN)** — soil type (Sand / Clay) and pipe diameter (2" / 4") are encoded as separate one-hot vectors and concatenated to the CNN feature vector before the fully connected layers. This lets the model learn the effect of each factor independently.
 2. **Gaussian noise augmentation** — for each training fold, 2× noisy copies of the A-scans (σ = 0.02, applied before STFT) are generated and mixed with real data.
 3. **Conditional WGAN-GP augmentation** — a conditional Wasserstein GAN (gradient penalty) is trained per fold on 108 real A-scans, conditioned on soil type, pipe diameter, and moisture values. 2× synthetic A-scans are generated via label interpolation between real pairs and mixed with real data for CNN training. Synthetic samples are saved to `data/augmented/gan/`.
+4. **Image augmentation (ablation)** — five standard image transforms (horizontal shift, brightness/contrast, Gaussian blur, Gaussian noise, CLAHE) applied directly to STFT spectrograms during training.
+5. **Simulation pre-training (Sim2Real)** — the CA-CNN encoder is pre-trained on 375 gprMax FDTD simulations (0.4 / 1.2 / 1.5 GHz, 125 layered conditions each), then fine-tuned on real data with a condition-aware head.
 
 ### Results (5-fold stratified CV, n=135)
 
 | Model | S (0 cm) | T (8 cm) | M (22 cm) | B (35 cm) | **Avg R²** |
 |-------|----------|----------|-----------|-----------|------------|
 | Baseline: STFT + 2D CNN | 0.870 | 0.754 | 0.743 | 0.820 | 0.797 ± 0.056 |
-| + Condition-aware head (soil + pipe) | 0.853 | 0.800 | 0.781 | 0.828 | 0.816 ± 0.056 |
-| + Condition-aware + Noise aug | 0.839 | 0.744 | 0.785 | 0.834 | 0.801 ± 0.070 |
-| **+ Condition-aware + cWGAN-GP aug** | **0.884** | **0.764** | **0.811** | **0.843** | **0.825 ± 0.056** |
+| + Condition-aware head (CA-CNN) | 0.853 | 0.800 | 0.781 | 0.828 | 0.816 ± 0.056 |
+| + CA-CNN + Noise aug | 0.839 | 0.744 | 0.785 | 0.834 | 0.801 ± 0.070 |
+| **+ CA-CNN + cWGAN-GP aug** | **0.884** | **0.764** | **0.811** | **0.843** | **0.825 ± 0.056** |
+| + CA-CNN + Sim pre-train (Sim2Real) | 0.804 | 0.738 | 0.683 | 0.771 | 0.749 ± 0.067 |
 
-The best model (condition-aware head + cWGAN-GP) achieves **Avg R² = 0.825**, a +2.8 pp improvement over the baseline. Gaussian noise augmentation alone did not help — the condition-aware encoding accounts for most of the gain, and GAN augmentation provides an additional boost when the generator is conditioned on the same soil/pipe metadata.
+The best model (CA-CNN + cWGAN-GP) achieves **Avg R² = 0.825**, a +2.8 pp improvement over the baseline. The condition-aware encoding accounts for most of the gain; GAN augmentation in the raw A-scan domain provides an additional boost. Gaussian noise augmentation did not improve over the condition-aware baseline alone.
+
+### Image augmentation ablation
+
+Standard image-space augmentations were tested individually on STFT spectrograms (CA-CNN, no GAN):
+
+| Augmentation | S | T | M | B | Avg R² | Δ vs no-aug |
+|---|---|---|---|---|---|---|
+| No augmentation | 0.795 | 0.698 | 0.686 | 0.743 | 0.730 | — |
+| Horizontal shift | 0.782 | 0.682 | 0.667 | 0.708 | 0.710 | −0.020 |
+| Brightness / contrast | 0.769 | 0.649 | 0.635 | 0.737 | 0.698 | −0.032 |
+| Gaussian blur | 0.799 | 0.687 | 0.695 | 0.707 | 0.722 | −0.008 |
+| Gaussian noise | 0.787 | 0.692 | 0.667 | 0.698 | 0.711 | −0.019 |
+| CLAHE | 0.753 | 0.677 | 0.646 | 0.702 | 0.695 | −0.035 |
+
+All five image-space transforms degraded accuracy. Unlike natural images where semantic content is invariant to photometric changes, STFT spectrograms encode physically meaningful time-frequency energy distributions. Arbitrary image transformations distort the relative amplitude and arrival-time relationships that carry moisture information. This confirms that augmentation should be performed in the raw A-scan domain (as in cWGAN-GP) rather than in the spectrogram image domain.
+
+### Simulation pre-training note
+
+A Sim2Real transfer experiment pre-trained the CA-CNN encoder on 375 gprMax FDTD simulations before fine-tuning on the 135 real samples. The result (Avg R² = 0.749) was below the real-data-only baseline, indicating that the simulation-to-reality domain gap (frequency mismatch: 0.4–1.5 GHz simulated vs 950 MHz measured; perfect layered model vs heterogeneous real soil) outweighs the benefit of additional training samples at the current simulation fidelity. Closing this gap through higher-fidelity simulation (matched antenna model, realistic soil heterogeneity) is a direction for future work.
 
 ### STFT Image Examples
 
